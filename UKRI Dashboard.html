@@ -1,0 +1,2814 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>impactOS Dashboard</title>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  
+  <style>
+    
+    * { box-sizing: border-box; }
+    
+    :root {
+      --bg-gradient-1: #84d0f5;
+      --bg-gradient-2: #fdc42a;
+      --bg-gradient-3: #f39200;
+      --bg-gradient-4: #e4022b;
+      --bg-gradient-5: #ae2146;
+      
+      --glass-bg: rgba(255, 255, 255, 0.4);
+      --glass-border: rgba(255, 255, 255, 0.6);
+      --glass-shadow: rgba(31, 38, 135, 0.12);
+      
+      --text-primary: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #b0b0b5;
+      
+      --accent: #007aff;
+      --accent-gradient-1: #007aff;
+      --accent-gradient-2: #00d4ff;
+      --accent-gradient-3: #a855f7;
+      
+      --success: #34c759;
+      --success-light: #d1f4da;
+      
+      --blur-sm: blur(30px);
+      --blur-md: blur(50px);
+      --blur-lg: blur(80px);
+      
+      --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+      --shadow-float: 0 12px 48px 0 rgba(31, 38, 135, 0.1);
+    }
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+    
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+      background: #ffffff;
+      position: relative;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-size: 17px;
+      line-height: 1.47059;
+      font-weight: 400;
+      letter-spacing: -0.022em;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      right: -30%;
+      top: -15%;
+      width: 140%;
+      height: 130%;
+      background: 
+        radial-gradient(circle at 95% 8%, var(--bg-gradient-1) 0%, transparent 20%),
+        radial-gradient(circle at 88% 15%, var(--bg-gradient-2) 0%, transparent 18%),
+        radial-gradient(circle at 96% 25%, var(--bg-gradient-3) 0%, transparent 16%),
+        radial-gradient(circle at 92% 35%, var(--bg-gradient-4) 0%, transparent 15%),
+        radial-gradient(circle at 85% 45%, var(--bg-gradient-1) 0%, transparent 19%),
+        radial-gradient(circle at 94% 55%, var(--bg-gradient-3) 0%, transparent 16%),
+        radial-gradient(circle at 88% 65%, var(--bg-gradient-2) 0%, transparent 18%),
+        radial-gradient(circle at 96% 75%, var(--bg-gradient-5) 0%, transparent 17%),
+        radial-gradient(circle at 90% 85%, var(--bg-gradient-4) 0%, transparent 16%),
+        radial-gradient(circle at 85% 92%, var(--bg-gradient-3) 0%, transparent 15%);
+      opacity: 0.85;
+      filter: blur(40px);
+      z-index: 0;
+      pointer-events: none;
+      animation: bubbleFloat 30s ease-in-out infinite;
+    }
+    
+    @keyframes bubbleFloat {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-30px);
+      }
+    }
+    
+    .app {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .version-badge {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      letter-spacing: 0.05em;
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 6px;
+    }
+    
+    /* Modern display corners - macOS/iPad style */
+    .screen-corner {
+      position: fixed;
+      width: 96px;
+      height: 96px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    
+    .screen-corner.top-left {
+      top: 0;
+      left: 0;
+    }
+    
+    .screen-corner.top-right {
+      top: 0;
+      right: 0;
+    }
+    
+    .screen-corner.bottom-left {
+      bottom: 0;
+      left: 0;
+    }
+    
+    .screen-corner.bottom-right {
+      bottom: 0;
+      right: 0;
+    }
+    
+    /* ============================================
+       Layout - Full Screen for Galaxy Tab A9+ (1920x1200)
+       ============================================ */
+    
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 100%;
+      margin: 0;
+      background: transparent;
+    }
+    
+    .dashboard-column {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+      background: transparent;
+    }
+    
+    .dashboard-column > * {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .app .navbar {
+      flex-shrink: 0;
+    }
+    
+    .app .main {
+      flex: 1;
+      opacity: 1;
+    }
+    
+    /* Navigation bar - Compact for split screen */
+    .navbar {
+      position: relative;
+      display: grid;
+      grid-template-columns: 320px 1fr 320px;
+      align-items: center;
+      gap: 40px;
+      padding: 16px 40px 12px 40px;
+      background: transparent;
+      z-index: 200;
+      height: 90px;
+    }
+    
+    .location-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    
+    .location-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    
+    .location-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+    
+    .brand {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 12px;
+      padding: 25px 28px 31px 28px;
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 100%);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border-radius: 0 0 28px 28px;
+      box-shadow: 
+        0 4px 20px rgba(31, 38, 135, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+      width: fit-content;
+      z-index: 300;
+    }
+    
+    .brand-logo {
+      height: 42px;
+      display: block;
+      position: relative;
+      top: 5px;
+    }
+    
+    .brand-text {
+      display: none;
+    }
+    
+    /* ============================================
+       Info Overlay - White screen with QR code
+       ============================================ */
+    
+    .info-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: white;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease-in-out;
+    }
+    
+    .info-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .info-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+    }
+    
+    .info-text {
+      font-size: 38px;
+      font-weight: 400;
+      color: #86868b;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+    }
+    
+    .info-website {
+      font-size: 56px;
+      font-weight: 600;
+      color: #1d1d1f;
+      letter-spacing: -0.02em;
+      line-height: 1.0;
+    }
+    
+    .info-qr {
+      display: none;
+    }
+    
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 20px;
+    }
+    
+    .icon-btn {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: 
+        linear-gradient(165deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 100%);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border: 1px solid transparent;
+      display: grid;
+      place-items: center;
+      cursor: default;
+      pointer-events: none;
+      color: var(--text-primary);
+      font-size: 20px;
+      box-shadow: 
+        0 4px 16px rgba(31, 38, 135, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+      opacity: 0.5;
+    }
+    
+    /* Main content area - Optimized for tablet */
+    .main {
+      overflow: hidden;
+      padding: 0;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+      display: flex;
+    }
+    
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+    }
+    
+    /* Main Layout: Device on left, metrics on right */
+    .main-layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      gap: 0;
+    }
+    
+    .device-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 24px 32px 32px 32px;
+      width: 420px;
+      flex-shrink: 0;
+      justify-content: flex-start;
+    }
+    
+    .metrics-section {
+      flex: 1;
+      padding: 24px 32px 32px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .metrics-header {
+      text-align: left;
+      padding: 0 20px;
+      margin-bottom: 8px;
+    }
+    
+    .metrics-header h1 {
+      display: none;
+    }
+    
+    .metrics-header p {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 0;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      top: 10px;
+    }
+    
+    /* ============================================
+       Cycle Status - Hidden (using product overlay instead)
+       ============================================ */
+    
+    .status-banner {
+      display: none !important;
+    }
+    
+    .status-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, 
+        rgba(0, 122, 255, 0.05) 0%, 
+        rgba(168, 85, 247, 0.05) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .status-banner.active {
+      display: flex;
+    }
+    
+    .status-banner.running::before {
+      opacity: 1;
+    }
+    
+    .status-banner.success {
+      background: linear-gradient(135deg, 
+        rgba(52, 199, 89, 0.15) 0%, 
+        rgba(48, 209, 88, 0.08) 100%);
+      border-color: rgba(52, 199, 89, 0.3);
+    }
+    
+    .status-banner.success::before {
+      opacity: 0;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Waveform Animation */
+    .waveform {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 60px;
+    }
+    
+    .waveform-bar {
+      width: 4px;
+      background: linear-gradient(180deg, var(--accent-gradient-1), var(--accent-gradient-2));
+      border-radius: 2px;
+      animation: wave 1.2s ease-in-out infinite;
+      box-shadow: 0 0 8px rgba(0, 122, 255, 0.4);
+    }
+    
+    .waveform-bar:nth-child(1) { animation-delay: 0s; }
+    .waveform-bar:nth-child(2) { animation-delay: 0.1s; }
+    .waveform-bar:nth-child(3) { animation-delay: 0.2s; }
+    .waveform-bar:nth-child(4) { animation-delay: 0.3s; }
+    .waveform-bar:nth-child(5) { animation-delay: 0.4s; }
+    .waveform-bar:nth-child(6) { animation-delay: 0.5s; }
+    .waveform-bar:nth-child(7) { animation-delay: 0.4s; }
+    .waveform-bar:nth-child(8) { animation-delay: 0.3s; }
+    .waveform-bar:nth-child(9) { animation-delay: 0.2s; }
+    .waveform-bar:nth-child(10) { animation-delay: 0.1s; }
+    
+    @keyframes wave {
+      0%, 100% { height: 12px; }
+      50% { height: 52px; }
+    }
+    
+    .status-text {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      text-align: center;
+    }
+    
+    .status-subtext {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+    
+    /* Success checkmark animation */
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--success), #30d158);
+      display: grid;
+      place-items: center;
+      font-size: 48px;
+      color: white;
+      box-shadow: 
+        0 8px 32px rgba(52, 199, 89, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      animation: successPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    @keyframes successPop {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(0, 122, 255, 0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* ============================================
+       Hero Metrics Grid - 2x3 grid for tablet, fills available space
+       ============================================ */
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+      padding: 20px 0;
+    }
+    
+    .metric-card.alternating {
+      transition: opacity 1s ease-in-out, filter 1s ease-in-out;
+    }
+    
+    .metric-card.alternating.transitioning {
+      opacity: 0;
+      filter: blur(10px);
+    }
+    
+    .metric-card {
+      position: relative;
+      background: 
+        linear-gradient(165deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 100%);
+      backdrop-filter: blur(50px) saturate(180%);
+      -webkit-backdrop-filter: blur(50px) saturate(180%);
+      border: 1.5px solid transparent;
+      border-radius: 18px;
+      padding: 20px 24px;
+      box-shadow: 
+        0 8px 32px rgba(31, 38, 135, 0.12),
+        0 2px 8px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      cursor: pointer;
+    }
+    
+    .metric-card.flipped {
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.45) 100%);
+    }
+    
+    .metric-card .card-content {
+      opacity: 1;
+      transition: opacity 0.3s ease-in-out;
+    }
+    
+    .metric-card .card-content.fading {
+      opacity: 0;
+    }
+    
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    
+    .metric-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      padding: 1.5px;
+      background: linear-gradient(165deg, 
+        rgba(255, 255, 255, 0.9) 0%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        rgba(255, 255, 255, 0.1) 100%);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    
+    .metric-card > * {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, 
+        var(--accent-gradient-1), 
+        var(--accent-gradient-2), 
+        var(--accent-gradient-3));
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    
+    .metric-card.highlight {
+      animation: cardPulse 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .metric-card.highlight::before {
+      opacity: 1;
+    }
+    
+    @keyframes cardPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    
+    .metric-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    
+    .cycle-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      padding: 4px 10px;
+      background: linear-gradient(135deg, #34c759, #30d158);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
+      opacity: 0;
+      transform: scale(0.8) translateY(-4px);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .cycle-badge.show {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    
+    .metric-value {
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+    
+    
+    
+    /* ============================================
+       Info Panels
+       ============================================ */
+    
+    .panel {
+      position: relative;
+      background: 
+        linear-gradient(165deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 100%);
+      backdrop-filter: blur(50px) saturate(180%);
+      -webkit-backdrop-filter: blur(50px) saturate(180%);
+      border: 1.5px solid transparent;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 
+        0 8px 32px rgba(31, 38, 135, 0.12),
+        0 2px 8px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.02);
+    }
+    
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+      opacity: 0.8;
+      z-index: 0;
+    }
+    
+    .panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      padding: 1.5px;
+      background: linear-gradient(165deg, 
+        rgba(255, 255, 255, 0.9) 0%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        rgba(255, 255, 255, 0.1) 100%);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .panel > * {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    
+    .panel-subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .stat-item {
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: var(--blur-sm);
+      -webkit-backdrop-filter: var(--blur-sm);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 4px 16px rgba(31, 38, 135, 0.08);
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+    
+    /* ============================================
+       Product Showcase - Left side with device image (no container background)
+       ============================================ */
+    
+    .product-showcase {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+      margin-top: -20px;
+    }
+    
+    .product-image-container {
+      width: 100%;
+      max-width: 336px;
+      position: relative;
+    }
+    
+    .product-image {
+      width: 100%;
+      height: auto;
+      -webkit-mask-image: radial-gradient(ellipse 80% 75% at center, 
+        black 30%, 
+        rgba(0, 0, 0, 0.8) 50%, 
+        rgba(0, 0, 0, 0.3) 70%,
+        transparent 95%);
+      mask-image: radial-gradient(ellipse 80% 75% at center, 
+        black 30%, 
+        rgba(0, 0, 0, 0.8) 50%, 
+        rgba(0, 0, 0, 0.3) 70%,
+        transparent 95%);
+    }
+    
+    .product-status-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+    
+    .product-status-overlay::before {
+      display: none;
+    }
+    
+    .product-status-overlay > * {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .device-status-list {
+      display: none;
+    }
+    
+    .device-status-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    
+    .device-status-item.active .device-name {
+      color: var(--success);
+    }
+    
+    .device-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .status-label {
+      display: none;
+    }
+    
+    .status-description {
+      display: none;
+    }
+    
+    .device-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: -20px;
+      padding: 0 24px;
+    }
+    
+    .device-stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 17px;
+      line-height: 1.5;
+    }
+    
+    .device-stat-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    .device-stat-value {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+    
+    .device-status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .device-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(142, 142, 147, 0.4);
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+    
+    .device-dot.online {
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(0, 122, 255, 0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .device-checkmark {
+      font-size: 18px;
+      color: var(--success);
+      opacity: 0;
+      transform: scale(0.3) rotate(-15deg);
+      transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    
+    .device-checkmark.show {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+    
+    
+    /* ============================================
+       Settings Panel
+       ============================================ */
+    
+    .settings-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(90vw, 520px);
+      background: var(--glass-bg);
+      backdrop-filter: var(--blur-lg);
+      -webkit-backdrop-filter: var(--blur-lg);
+      border-left: 2px solid var(--glass-border);
+      box-shadow: var(--shadow-float);
+      z-index: 300;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    
+    .settings-panel.open {
+      transform: translateX(0);
+    }
+    
+    .settings-header {
+      padding: 24px 28px;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .settings-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0;
+    }
+    
+    .settings-body {
+      overflow-y: auto;
+      padding: 24px;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .settings-footer {
+      padding: 20px 24px;
+      border-top: 0.5px solid var(--divider);
+      display: flex;
+      gap: 12px;
+    }
+    
+    .form-section {
+      margin-bottom: 28px;
+    }
+    
+    .form-section-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      color: var(--text-primary);
+    }
+    
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 0.5px solid var(--divider);
+    }
+    
+    .form-row:last-child {
+      border-bottom: none;
+    }
+    
+    .form-label {
+      font-size: 15px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    
+    .form-input {
+      background: var(--bg-elevated);
+      border: 1px solid var(--divider);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 15px;
+      color: var(--text-primary);
+      width: 120px;
+      text-align: right;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    /* ============================================
+       Buttons
+       ============================================ */
+    
+    .btn {
+      padding: 14px 28px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      cursor: default;
+      pointer-events: none;
+      border: none;
+      font-family: inherit;
+      flex: 1;
+      opacity: 0.5;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-gradient-1), var(--accent-gradient-2));
+      color: white;
+      box-shadow: 
+        var(--shadow-glass),
+        inset 0 1px 1px rgba(255, 255, 255, 0.3);
+    }
+    
+    .btn-secondary {
+      background: var(--glass-bg);
+      backdrop-filter: var(--blur-sm);
+      -webkit-backdrop-filter: var(--blur-sm);
+      color: var(--text-primary);
+      border: 1.5px solid var(--glass-border);
+      box-shadow: var(--shadow-glass);
+    }
+    
+    .btn-text {
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      padding: 0;
+      font-weight: 600;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+      cursor: default;
+      pointer-events: none;
+      font-family: inherit;
+      opacity: 0.5;
+    }
+    
+    /* ============================================
+       Toast Notification
+       ============================================ */
+    
+    .toast {
+      position: fixed;
+      bottom: 48px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--glass-bg);
+      backdrop-filter: var(--blur-lg);
+      -webkit-backdrop-filter: var(--blur-lg);
+      padding: 16px 32px;
+      border-radius: 100px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-float);
+      border: 1.5px solid var(--glass-border);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 400;
+    }
+    
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    
+    /* ============================================
+       Scroll Indicator
+       ============================================ */
+    
+    .scroll-indicator {
+      display: none;
+    }
+    
+    .scroll-indicator-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+    
+    .scroll-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--glass-bg);
+      backdrop-filter: var(--blur-sm);
+      -webkit-backdrop-filter: var(--blur-sm);
+      border: 1.5px solid var(--glass-border);
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-glass);
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    /* ============================================
+       Utilities
+       ============================================ */
+    
+    .badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: var(--blur-sm);
+      -webkit-backdrop-filter: var(--blur-sm);
+      color: var(--text-primary);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 2px 8px rgba(31, 38, 135, 0.08);
+    }
+    
+    .text-gradient {
+      background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .action-panel {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      cursor: default;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    
+    .action-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-gradient-1), var(--accent-gradient-2));
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+      box-shadow: 
+        var(--shadow-glass),
+        inset 0 1px 1px rgba(255, 255, 255, 0.3);
+    }
+    
+    .action-icon.success {
+      background: linear-gradient(135deg, #34c759, #30d158);
+    }
+    
+    .action-icon.neutral {
+      background: linear-gradient(135deg, #8e8e93, #636366);
+    }
+    
+    .action-content h3 {
+      margin: 0 0 3px 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .action-content p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .action-chevron {
+      font-size: 20px;
+      color: var(--text-tertiary);
+      transition: transform 0.3s ease;
+    }
+    
+    .action-panel:hover .action-chevron {
+      transform: translateX(4px);
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    
+    .status-dot.ok {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(52, 199, 89, 0.4);
+    }
+    
+    .status-dot.warning {
+      background: #f59e0b;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <!-- Modern Display Corners -->
+  <svg class="screen-corner top-left" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 0,0 L 0,96 Q 0,0 96,0 L 0,0 Z" fill="black"/>
+  </svg>
+  
+  <svg class="screen-corner top-right" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 96,0 L 96,96 Q 96,0 0,0 L 96,0 Z" fill="black"/>
+  </svg>
+  
+  <svg class="screen-corner bottom-left" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 0,96 L 0,0 Q 0,96 96,96 L 0,96 Z" fill="black"/>
+  </svg>
+  
+  <svg class="screen-corner bottom-right" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 96,96 L 96,0 Q 96,96 0,96 L 96,96 Z" fill="black"/>
+  </svg>
+  
+  <div class="app" id="app">
+    <!-- Dashboard Column -->
+    <div class="dashboard-column">
+      <!-- Navigation -->
+      <nav class="navbar">
+        <!-- Left: Greeting -->
+        <div style="display: flex; align-items: center; justify-content: flex-start;">
+          <div id="greeting" style="font-size: 42px; font-weight: 300; color: var(--text-primary); letter-spacing: -0.015em; line-height: 1.25; position: relative; left: 20px; top: 10px;">
+            Good evening,<br>UKRI
+          </div>
+        </div>
+        
+        <!-- Center: Logo (absolute positioned, this is just a placeholder) -->
+        <div style="position: relative;">
+          <div class="brand" id="brandTap">
+            <img src="static/impactOS Logo.png" alt="impactOS" class="brand-logo">
+          </div>
+        </div>
+        
+        <!-- Right: Location & Time -->
+        <div class="nav-actions">
+          <div class="location-info">
+            <div class="location-label">Location</div>
+            <div class="location-title">Polaris House</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 140px;">
+            <div id="navTime" style="font-size: 28px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; line-height: 1.1;">00:00</div>
+            <div id="navDate" style="font-size: 13px; font-weight: 500; color: var(--text-secondary); letter-spacing: 0.01em; margin-top: 2px;">Monday, 1 Jan</div>
+          </div>
+        </div>
+      </nav>
+    
+    <!-- Main Content -->
+    <main class="main">
+      <div class="container">
+        <!-- Main Layout: Device on left, metrics on right -->
+        <div class="main-layout">
+          <!-- Left Side: Device -->
+          <div class="device-section">
+            <div class="product-showcase" id="productShowcase">
+              <div class="product-image-container">
+                <img src="static/Render Freestanding.png" alt="instarinse® Machine" class="product-image">
+              </div>
+            </div>
+            
+            <div class="product-status-overlay" id="productStatusOverlay">
+              <!-- Device status will be inserted here -->
+            </div>
+          </div>
+          
+          <!-- Right Side: Metrics Grid -->
+          <div class="metrics-section">
+            <!-- Header explaining impactOS -->
+            <div class="metrics-header">
+              <h1>impactOS<sup style="font-size: 18px;">™</sup></h1>
+              <p>Designed and built in Chippenham, UK, instarinse® delivers hygienic, ultra efficient reusable cleaning in just 25 seconds using 50ml of water per cycle. Our 5G connected devices, powered by impactOS, enable real time monitoring and data insights into exact progress to eliminate single use cups and transform operations.</p>
+            </div>
+            
+            <div class="metrics-grid">
+              <!-- Paper Cups Saved -->
+              <div class="metric-card" data-metric="cups">
+                <div class="metric-label">Paper Cups Saved</div>
+                <div class="metric-value" id="metricCups">0</div>
+                <div style="font-size: 14px; font-weight: 600; margin-top: 6px; color: var(--text-secondary);">Total to date</div>
+              </div>
+              
+              <!-- Cup Cost Saved -->
+              <div class="metric-card" data-metric="cup-cost">
+                <div class="metric-label">Cup Cost Saved</div>
+                <div class="metric-value" id="metricCupCost">£0.0</div>
+                <div style="font-size: 14px; font-weight: 600; margin-top: 6px; color: var(--text-secondary);" id="cupCostAssumption">Based on £0.30/cup</div>
+              </div>
+              
+              <!-- Water Usage -->
+              <div class="metric-card" data-metric="water-usage">
+                <div class="metric-label">
+                  Water Usage
+                  <span class="cycle-badge" id="waterUsageBadge">+50mL</span>
+                </div>
+                <div class="metric-value" id="metricWaterUsage">0.0<small style="font-size: 22px; font-weight: 600; margin-left: 4px;">L</small></div>
+              </div>
+              
+              <!-- Water Savings (alternating) -->
+              <div class="metric-card alternating" data-metric="water-savings">
+                <div class="metric-label" id="waterSavingsLabel">Water Saved vs Handwash</div>
+                <div class="metric-value" id="metricWaterSavings">0.0<small style="font-size: 22px; font-weight: 600; margin-left: 4px;">L</small></div>
+                <div style="font-size: 14px; font-weight: 600; margin-top: 6px; color: var(--success);" id="waterSavingsPercent">0% less water</div>
+              </div>
+              
+              <!-- Energy Usage -->
+              <div class="metric-card" data-metric="energy-usage">
+                <div class="metric-label">
+                  Energy Usage
+                  <span class="cycle-badge" id="energyUsageBadge">+0.009kWh</span>
+                </div>
+                <div class="metric-value" id="metricEnergyUsage">0.0<small style="font-size: 22px; font-weight: 600; margin-left: 4px;">kWh</small></div>
+                <div style="font-size: 14px; font-weight: 600; margin-top: 6px; color: var(--text-secondary);" id="energyCost">Cost: £0.0</div>
+              </div>
+              
+              <!-- Energy Savings (alternating) -->
+              <div class="metric-card alternating" data-metric="energy-savings">
+                <div class="metric-label" id="energySavingsLabel">Energy Saved vs Handwash</div>
+                <div class="metric-value" id="metricEnergySavings">0.0<small style="font-size: 22px; font-weight: 600; margin-left: 4px;">kWh</small></div>
+                <div style="font-size: 14px; font-weight: 600; margin-top: 6px; color: var(--success);" id="energySavingsPercent">0% less energy</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    </div> <!-- End dashboard-column -->
+  </div> <!-- End app -->
+  
+  
+  
+  <!-- Toast (outside app grid) -->
+  <div class="toast" id="toast">Saved</div>
+  
+  <!-- Info Overlay -->
+  <div class="info-overlay" id="infoOverlay">
+    <div class="info-content" id="infoContent">
+      <div class="info-text">Find out more</div>
+      <div class="info-website">instarinse.com</div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // Firebase Configuration
+    // ============================================
+    const FIREBASE_CONFIG = {
+      databaseURL: "https://test-database-8f390-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const database = firebase.database();
+    
+    // ============================================
+    // Device Configuration
+    // ============================================
+    const DEVICE = {
+      serialNumbers: ['IJV-5444'],  // Only track current unit
+      deviceNames: {
+        'IJV-5444': 'instarinse® Unit'
+      },
+      // Date ranges define when each unit was active - data is filtered by these ranges
+      deviceRanges: {
+        'IJV-5444': { startDate: '2025-10-31', endDate: null }  // Current unit (from Oct 31 onwards)
+      },
+      cycleTime: 25,                         // 25 seconds per cycle
+      waterUsage: 50,                        // 50 mL per cycle
+      energyUsage: 0.009,                    // 0.009 kWh per cycle
+      manualAdjustment: 3660,                // Manual adjustment to add to cycle count
+    };
+    
+    // Helper to get active device for a given date
+    function getActiveDevice(date) {
+      // Handle both Date objects and date strings
+      let checkDate;
+      if (date instanceof Date) {
+        checkDate = date.toISOString().split('T')[0];
+      } else if (typeof date === 'string') {
+        // If it's already in YYYY-MM-DD format, use it directly
+        if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          checkDate = date;
+        } else {
+          checkDate = new Date(date).toISOString().split('T')[0];
+        }
+      } else {
+        checkDate = new Date(date).toISOString().split('T')[0];
+      }
+      
+      for (const serial of DEVICE.serialNumbers) {
+        const range = DEVICE.deviceRanges[serial];
+        const start = range.startDate;
+        const end = range.endDate;
+        if (checkDate >= start && (end === null || checkDate <= end)) {
+          return serial;
+        }
+      }
+      return null;
+    }
+    
+    const BASELINES = {
+      handwash: {
+        water: 1000,        // 1L per cup
+        energy: 0.08,       // 0.08kWh per cup
+      },
+      dishwash: {
+        water: 250,         // 250ml per cup
+        energy: 0.032,      // 0.032kWh per cup
+      }
+    };
+    
+    const CUP_COST = 0.30;
+    
+    const DEFAULT_CONFIG = {
+      baselines: { handWashWater: 1000, handWashEnergy: 0.05, manualTime: 45 },
+      tariffs: { water: 2.50, energy: 0.30, staff: 15.00 },
+      pin: '2468',
+      resetDateTime: null, // Store reset date/time as timestamp
+      startingValue: 0, // Starting count at reset time
+    };
+    
+    
+    class DashboardState {
+      constructor() {
+        this.config = { ...DEFAULT_CONFIG };
+        this.cycles = [];
+        this.totals = {
+          water: 0,
+          energy: 0,
+          time: 0,
+          cost: 0,
+        };
+        this.sessionDate = new Date().toDateString();
+        this.unlocked = false;
+        this.lastCounters = {};  // Track last known counter per device
+        this.devicesOnline = new Set();  // Track which devices have sent data
+        this.deviceActivity = {};  // Track last activity timestamp per device (for checkmark animation)
+        this.lastHeartbeat = {};  // Track last data received timestamp (for online/offline status)
+        
+        // Initialize counters for each device
+        DEVICE.serialNumbers.forEach(serial => {
+          this.lastCounters[serial] = 0;
+          this.deviceActivity[serial] = null;
+          this.lastHeartbeat[serial] = null;
+        });
+        
+        this.load();
+        
+        // Set default resetDateTime to today at 9am if not set
+        if (!this.config.resetDateTime) {
+          const today = new Date();
+          today.setHours(9, 0, 0, 0);
+          this.config.resetDateTime = today.getTime();
+          this.save();
+        }
+      }
+      
+      load() {
+        try {
+          const stored = localStorage.getItem('instarinse_dashboard_v2');
+          if (stored) {
+            const data = JSON.parse(stored);
+            // Load config and lastCounters, but cycles will be loaded from Firebase
+            this.config = { ...DEFAULT_CONFIG, ...data.config };
+            this.lastCounters = data.lastCounters || this.lastCounters;
+            
+            // Start with empty cycles - they will be loaded from Firebase historical data
+            this.cycles = [];
+            this.totals = {
+              water: 0,
+              energy: 0,
+              time: 0,
+              cost: 0,
+            };
+            
+            console.log('📋 Loaded config and counters from localStorage. Historical data will be loaded from Firebase.');
+          }
+        } catch (e) {
+          console.error('Failed to load state:', e);
+        }
+      }
+      
+      save() {
+        try {
+          localStorage.setItem('instarinse_dashboard_v2', JSON.stringify({
+            sessionDate: this.sessionDate,
+            cycles: this.cycles,
+            totals: this.totals,
+            config: this.config,
+            lastCounters: this.lastCounters,
+          }));
+        } catch (e) {
+          console.error('Failed to save state:', e);
+        }
+      }
+      
+      reset() {
+        this.cycles = [];
+        this.totals = { water: 0, energy: 0, time: 0, cost: 0 };
+        this.sessionDate = new Date().toDateString();
+        DEVICE.serialNumbers.forEach(serial => {
+          this.lastCounters[serial] = 0;
+        });
+        this.save();
+      }
+      
+      addCycle(cycle) {
+        this.cycles.push(cycle);
+        this.totals.water += cycle.savings.water;
+        this.totals.energy += cycle.savings.energy;
+        this.totals.time += cycle.savings.time;
+        this.totals.cost += cycle.savings.cost;
+        this.save();
+      }
+      
+      calculateSavings() {
+        const waterSaved = (this.config.baselines.handWashWater - DEVICE.waterUsage) / 1000; // Convert to litres
+        const energySaved = this.config.baselines.handWashEnergy - DEVICE.energyUsage;
+        const timeSaved = (this.config.baselines.manualTime - DEVICE.cycleTime) / 3600; // Convert to hours
+        
+        const waterCost = waterSaved * this.config.tariffs.water;
+        const energyCost = energySaved * this.config.tariffs.energy;
+        const timeCost = timeSaved * this.config.tariffs.staff;
+        const totalCost = waterCost + energyCost + timeCost;
+        
+        return {
+          water: Math.max(0, waterSaved),
+          energy: Math.max(0, energySaved),
+          time: Math.max(0, timeSaved),
+          cost: Math.max(0, totalCost),
+        };
+      }
+    }
+    
+    
+    class DashboardUI {
+      constructor(state) {
+        this.state = state;
+        this.elements = this.getElements();
+        this.comparisonMode = 'handwash'; // 'handwash' or 'dishwash'
+        this.alternateInterval = null;
+        this.tapCount = 0;
+        this.tapTimer = null;
+        this.flipTimers = {};  // Track flip timers for each card
+        this.bindEvents();
+        this.setupCardFlips();  // Setup flip functionality
+        this.render();
+        this.startClock();
+        this.startAlternating();
+        this.startFirebaseListener(); // Start listening for real data
+        
+        // Show device list on product
+        setTimeout(() => {
+          const overlay = document.getElementById('productStatusOverlay');
+          if (overlay) {
+            this.renderDeviceList();
+          }
+        }, 100);
+      }
+      
+      getElements() {
+        return {
+          // Metrics
+          metricWaterUsage: document.getElementById('metricWaterUsage'),
+          metricWaterSavings: document.getElementById('metricWaterSavings'),
+          waterSavingsLabel: document.getElementById('waterSavingsLabel'),
+          waterSavingsPercent: document.getElementById('waterSavingsPercent'),
+          
+          metricEnergyUsage: document.getElementById('metricEnergyUsage'),
+          metricEnergySavings: document.getElementById('metricEnergySavings'),
+          energySavingsLabel: document.getElementById('energySavingsLabel'),
+          energySavingsPercent: document.getElementById('energySavingsPercent'),
+          
+          metricCups: document.getElementById('metricCups'),
+          metricCupCost: document.getElementById('metricCupCost'),
+          
+          // Clock
+          navTime: document.getElementById('navTime'),
+          navDate: document.getElementById('navDate'),
+          
+          // Status
+          statusBanner: document.getElementById('statusBanner'),
+          
+          // Toast
+          toast: document.getElementById('toast'),
+        };
+      }
+      
+      bindEvents() {
+        // Logo tap to show info overlay
+        const brandTap = document.getElementById('brandTap');
+        const infoOverlay = document.getElementById('infoOverlay');
+        const infoContent = document.getElementById('infoContent');
+        let overlayTimer = null;
+        
+        if (brandTap) {
+          brandTap.addEventListener('click', () => {
+            // Show overlay with fade
+            infoOverlay.classList.add('active');
+            
+            // Set timer to auto-hide after 10 seconds
+            if (overlayTimer) {
+              clearTimeout(overlayTimer);
+            }
+            overlayTimer = setTimeout(() => {
+              infoOverlay.classList.remove('active');
+              overlayTimer = null;
+            }, 10000);
+          });
+        }
+        
+        // Tap overlay to hide it
+        if (infoContent) {
+          infoContent.addEventListener('click', () => {
+            if (overlayTimer) {
+              clearTimeout(overlayTimer);
+              overlayTimer = null;
+            }
+            infoOverlay.classList.remove('active');
+          });
+        }
+      }
+      
+      setupCardFlips() {
+        // Add click event to all metric cards for flip animation
+        const metricCards = document.querySelectorAll('.metric-card');
+        
+        // Define assumptions for each card
+        const assumptions = {
+          'cups': {
+            title: 'Assumptions',
+            text: 'Each wash cycle prevents the use of one single-use cup. Total calculated since install date.'
+          },
+          'cup-cost': {
+            title: 'Assumptions',
+            text: 'Based on average cost of £0.30 per single-use cup, including purchase, storage and disposal costs.'
+          },
+          'water-usage': {
+            title: 'Assumptions',
+            text: 'Each cycle uses 50ml of water. Total calculated from number of cycles since installation.'
+          },
+          'water-savings': {
+            title: 'Assumptions',
+            text: 'Handwashing baseline: 1000ml per cup. Dishwasher baseline: 250ml per cup. Compared against instarinse® usage of 50ml per cycle.'
+          },
+          'energy-usage': {
+            title: 'Assumptions',
+            text: 'Each cycle uses 0.009kWh. Cost calculated at £0.28 per kWh (current average UK energy tariff).'
+          },
+          'energy-savings': {
+            title: 'Assumptions',
+            text: 'Handwashing baseline: 0.08kWh per cup (hot water heating). Dishwasher baseline: 0.032kWh per cup. Compared against instarinse® usage of 0.009kWh per cycle.'
+          }
+        };
+        
+        metricCards.forEach(card => {
+          const metric = card.getAttribute('data-metric');
+          const assumption = assumptions[metric];
+          
+          if (!assumption) return;
+          
+          card.addEventListener('click', (e) => {
+            console.log('Card clicked:', metric);
+            
+            const isFlipped = card.classList.contains('flipped');
+            
+            if (isFlipped) {
+              // Clicking while flipped - flip back immediately
+              this.flipCardBack(card, metric);
+            } else {
+              // Flip to assumptions
+              this.flipCardToAssumptions(card, metric, assumption);
+            }
+          });
+        });
+      }
+      
+      flipCardToAssumptions(card, metric, assumption) {
+        // Clear any existing timer
+        if (this.flipTimers[metric]) {
+          clearTimeout(this.flipTimers[metric]);
+          delete this.flipTimers[metric];
+        }
+        
+        // Store current content NOW (with live data)
+        if (!card.dataset.originalContent) {
+          card.dataset.originalContent = card.innerHTML;
+        }
+        
+        // Wrap current content in card-content div for fading
+        const currentContent = card.innerHTML;
+        card.innerHTML = `<div class="card-content">${currentContent}</div>`;
+        
+        // Force reflow to ensure the wrapper is rendered
+        card.offsetHeight;
+        
+        const contentDiv = card.querySelector('.card-content');
+        if (!contentDiv) return;
+        
+        // Wait a frame before fading to ensure transition is triggered
+        requestAnimationFrame(() => {
+          contentDiv.classList.add('fading');
+        });
+        
+        // After fade out, swap content and fade in
+        setTimeout(() => {
+          card.innerHTML = `
+            <div class="card-content" style="opacity: 0;">
+              <div style="display: flex; flex-direction: column; gap: 8px; justify-content: center; height: 100%;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.06em;">${assumption.title}</div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--text-secondary); line-height: 1.5;">${assumption.text}</div>
+              </div>
+            </div>
+          `;
+          
+          card.classList.add('flipped');
+          
+          // Force reflow to trigger animation
+          card.offsetHeight;
+          
+          // Fade in new content
+          const newContentDiv = card.querySelector('.card-content');
+          requestAnimationFrame(() => {
+            newContentDiv.style.opacity = '1';
+          });
+          
+          // Set auto-revert timer
+          this.flipTimers[metric] = setTimeout(() => {
+            this.flipCardBack(card, metric);
+          }, 6000);
+        }, 300);
+      }
+      
+      flipCardBack(card, metric) {
+        // Clear timer if exists
+        if (this.flipTimers[metric]) {
+          clearTimeout(this.flipTimers[metric]);
+          delete this.flipTimers[metric];
+        }
+        
+        const contentDiv = card.querySelector('.card-content');
+        if (!contentDiv) return;
+        
+        // Fade out assumptions
+        requestAnimationFrame(() => {
+          contentDiv.classList.add('fading');
+        });
+        
+        // After fade out, restore original content and fade in
+        setTimeout(() => {
+          const originalContent = card.dataset.originalContent;
+          card.innerHTML = `<div class="card-content" style="opacity: 0;">${originalContent}</div>`;
+          card.classList.remove('flipped');
+          
+          // Clear the stored content so it's captured fresh next time
+          delete card.dataset.originalContent;
+          
+          // Force reflow
+          card.offsetHeight;
+          
+          // Fade in
+          const newContentDiv = card.querySelector('.card-content');
+          if (newContentDiv) {
+            requestAnimationFrame(() => {
+              newContentDiv.style.opacity = '1';
+            });
+            
+            // After fade in completes, unwrap the content
+            setTimeout(() => {
+              card.innerHTML = originalContent;
+            }, 350);
+          }
+        }, 300);
+      }
+      
+      
+      showToast(message) {
+        this.elements.toast.textContent = message;
+        this.elements.toast.classList.add('show');
+        setTimeout(() => {
+          this.elements.toast.classList.remove('show');
+        }, 2000);
+      }
+      
+      // Helper to calculate data size in MB
+      calculateDataSize(data) {
+        const jsonString = JSON.stringify(data);
+        const sizeInBytes = new Blob([jsonString]).size;
+        return sizeInBytes / (1024 * 1024); // Convert to MB
+      }
+      
+      // Helper to parse timestamp to UTC (same technique as provided HTML)
+      parseTimestampToUTC(timestamp) {
+        if (!timestamp) return null;
+        
+        // Try ISO8601 first
+        if (typeof timestamp === 'string' && timestamp.includes('T')) {
+          try {
+            const date = new Date(timestamp);
+            if (!isNaN(date.getTime())) {
+              return date;
+            }
+          } catch (e) {}
+        }
+        
+        // Try numeric timestamp (milliseconds or seconds)
+        if (typeof timestamp === 'number') {
+          const ms = timestamp > 1000000000000 ? timestamp : timestamp * 1000;
+          const date = new Date(ms);
+          if (!isNaN(date.getTime())) {
+            return date;
+          }
+        }
+        
+        return null;
+      }
+      
+      // Helper to format date as YYYY-MM-DD
+      formatDate(date) {
+        if (!date) return null;
+        const d = date instanceof Date ? date : new Date(date);
+        if (isNaN(d.getTime())) return null;
+        return d.toISOString().split('T')[0];
+      }
+      
+      startFirebaseListener() {
+        console.log(`🚀 Starting Firebase listener using new technique`);
+        
+        // Track data usage
+        this.totalDataDownloadedMB = 0;
+        this.liveDataReceivedMB = 0;
+        
+        // Configuration: Only IJV-5444 from 2025-10-31 onwards
+        const FILTER_START_DATE = '2025-10-31';
+        const TARGET_SERIAL = 'IJV-5444';
+        
+        // STEP 1: Fetch all data using REST API (same technique as provided HTML)
+        console.log('📥 Step 1: Fetching all data from Firebase REST API...');
+        const downloadStartTime = Date.now();
+        
+        fetch(`${FIREBASE_CONFIG.databaseURL}/counter_values.json`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Failed to fetch data: ${response.statusText}`);
+            }
+            return response.json();
+          })
+          .then(rawData => {
+            // Track snapshot keys from historical data to avoid reprocessing in live listener
+            this.seenSnapshotKeys = this.seenSnapshotKeys || new Set();
+            if (rawData) {
+              Object.keys(rawData).forEach(key => {
+                this.seenSnapshotKeys.add(key);
+              });
+              console.log(`  📋 Tracked ${this.seenSnapshotKeys.size} snapshot keys from historical data`);
+            }
+            console.log(`  ✓ Received data from Firebase REST API`);
+            
+            if (!rawData) {
+              console.log('  ⚠️ No data found');
+              this.setupLiveListener(TARGET_SERIAL, FILTER_START_DATE, null);
+              return;
+            }
+            
+            const dataSizeMB = this.calculateDataSize(rawData);
+            this.totalDataDownloadedMB = dataSizeMB;
+            console.log(`  📊 Raw data size: ${dataSizeMB.toFixed(3)} MB`);
+            
+            // Process data by serial and date (same technique as provided HTML)
+            const dailyBySerial = {};
+            let totalRecords = 0;
+            let recordsWithSerial = 0;
+            let recordsMatchingSerial = 0;
+            let recordsWithCounter = 0;
+            let recordsWithTimestamp = 0;
+            let recordsWithDate = 0;
+            let recordsPassingDateFilter = 0;
+            const serialNumbersSeen = new Set();
+            const sampleEntries = [];
+            
+            Object.values(rawData).forEach(entry => {
+              totalRecords++;
+              
+              if (!entry?.serial_number) return;
+              recordsWithSerial++;
+              
+              const serial = entry.serial_number.trim();
+              serialNumbersSeen.add(serial);
+              
+              // Only process RJI-5566
+              if (serial !== TARGET_SERIAL) return;
+              recordsMatchingSerial++;
+              
+              // Collect sample entries for debugging
+              if (sampleEntries.length < 5) {
+                sampleEntries.push({
+                  serial: serial,
+                  counter: entry.counter,
+                  iso8601: entry.iso8601,
+                  timestamp_ms: entry.timestamp_ms,
+                  timestamp: entry.timestamp
+                });
+              }
+              
+              const counter = entry.counter;
+              if (counter == null) return;
+              recordsWithCounter++;
+              
+              const timestamp = this.parseTimestampToUTC(entry.iso8601 || entry.timestamp_ms || entry.timestamp);
+              if (!timestamp) return;
+              recordsWithTimestamp++;
+              
+              const dateKey = this.formatDate(timestamp);
+              if (!dateKey) return;
+              recordsWithDate++;
+              
+              // Apply date filter: only from 2025-10-31 onwards
+              if (dateKey < FILTER_START_DATE) return;
+              recordsPassingDateFilter++;
+              
+              if (!dailyBySerial[serial]) {
+                dailyBySerial[serial] = {};
+              }
+              if (!dailyBySerial[serial][dateKey]) {
+                dailyBySerial[serial][dateKey] = [];
+              }
+              dailyBySerial[serial][dateKey].push(counter);
+            });
+            
+            console.log(`  📊 Processed ${totalRecords} total records`);
+            console.log(`  📋 Only processing ${TARGET_SERIAL} from ${FILTER_START_DATE} onwards`);
+            console.log(`  🔍 Debug breakdown:`);
+            console.log(`     • Records with serial_number: ${recordsWithSerial}`);
+            console.log(`     • Records matching ${TARGET_SERIAL}: ${recordsMatchingSerial}`);
+            console.log(`     • Records with counter: ${recordsWithCounter}`);
+            console.log(`     • Records with valid timestamp: ${recordsWithTimestamp}`);
+            console.log(`     • Records with valid date: ${recordsWithDate}`);
+            console.log(`     • Records passing date filter (>= ${FILTER_START_DATE}): ${recordsPassingDateFilter}`);
+            console.log(`  📋 Unique serial numbers found: ${Array.from(serialNumbersSeen).slice(0, 10).join(', ')}${serialNumbersSeen.size > 10 ? '...' : ''} (${serialNumbersSeen.size} total)`);
+            if (sampleEntries.length > 0) {
+              console.log(`  🔍 Sample entries for ${TARGET_SERIAL}:`, sampleEntries);
+            }
+            
+            // Calculate daily usage (same technique as provided HTML)
+            const serialUsage = [];
+            Object.entries(dailyBySerial).forEach(([serial, dateMap]) => {
+              const entries = Object.entries(dateMap)
+                .map(([date, counters]) => ({
+                  date,
+                  finalCounter: Math.max(...counters)
+                }))
+                .sort((a, b) => a.date.localeCompare(b.date));
+              
+              entries.forEach((entry, index) => {
+                let cycles = 0;
+                if (index === 0) {
+                  cycles = entry.finalCounter;
+                } else {
+                  cycles = entry.finalCounter - entries[index - 1].finalCounter;
+                }
+                // Filter out anomalies (same as provided HTML)
+                if (cycles > 0 && cycles <= 500) {
+                  serialUsage.push({
+                    serial,
+                    date: entry.date,
+                    cycles
+                  });
+                }
+              });
+            });
+            
+            // Apply date filters (already done above, but double-check)
+            const filteredUsage = serialUsage.filter(record => {
+              if (FILTER_START_DATE && record.date < FILTER_START_DATE) {
+                return false;
+              }
+              return true;
+            });
+            
+            const downloadTime = ((Date.now() - downloadStartTime) / 1000).toFixed(2);
+            console.log(`📊 Historical data processing complete:`);
+            console.log(`   • Total records scanned: ${totalRecords}`);
+            console.log(`   • Daily usage records: ${filteredUsage.length}`);
+            console.log(`   • Total cycles: ${filteredUsage.reduce((sum, r) => sum + r.cycles, 0)}`);
+            console.log(`   • Processing time: ${downloadTime}s`);
+            
+            // Process historical data and show initial values
+            this.loadHistoricalDataFromDailyUsage(filteredUsage);
+            
+            // Get max date for live listener
+            const maxDate = filteredUsage.length > 0 
+              ? filteredUsage[filteredUsage.length - 1].date 
+              : FILTER_START_DATE;
+            
+            // STEP 2: Set up SDK for live updates
+            this.setupLiveListener(TARGET_SERIAL, FILTER_START_DATE, maxDate);
+          })
+          .catch(error => {
+            console.error(`❌ Download failed:`, error);
+            console.error(`   Error:`, error.message || error);
+            // Still set up live listener even if historical fetch fails
+            this.setupLiveListener(TARGET_SERIAL, FILTER_START_DATE, null);
+          });
+          
+        // Set up connection status monitoring
+        this.setupConnectionStatus();
+        
+        // Start timeout checker (every 30 seconds, check for stale devices)
+        this.startTimeoutChecker();
+        
+        // Start page visibility monitor for Android WebView issues
+        this.startVisibilityMonitor();
+        
+        // Periodic connection health check
+        this.startConnectionHealthCheck();
+        
+        // Periodic data usage summary
+        if (!this.dataUsageInterval) {
+          this.dataUsageInterval = setInterval(() => {
+            const totalMB = this.totalDataDownloadedMB + this.liveDataReceivedMB;
+            console.log(`📊 Data Usage Summary:`);
+            console.log(`   • Historical: ${this.totalDataDownloadedMB.toFixed(3)} MB`);
+            console.log(`   • Live updates: ${this.liveDataReceivedMB.toFixed(3)} MB`);
+            console.log(`   • Total: ${totalMB.toFixed(3)} MB`);
+          }, 60000); // Every minute
+        }
+      }
+      
+      setupLiveListener(targetSerial, filterStartDate, maxHistoricalDate) {
+        console.log(`📡 Step 2: Setting up live SDK listener...`);
+        console.log(`   • Monitoring serial: ${targetSerial}`);
+        console.log(`   • Date filter: from ${filterStartDate} onwards`);
+        if (maxHistoricalDate) {
+          console.log(`   • Max historical date: ${maxHistoricalDate}`);
+        }
+        
+        const counterRef = database.ref('counter_values');
+        
+        // Track last known counter per date for live updates
+        this.lastDailyCounters = this.lastDailyCounters || {};
+        if (!this.lastDailyCounters[targetSerial]) {
+          this.lastDailyCounters[targetSerial] = {};
+        }
+        
+        // Track max timestamp seen from historical data to avoid reprocessing
+        // We'll only process records with timestamps newer than this
+        let maxHistoricalTimestamp = 0;
+        if (maxHistoricalDate) {
+          // Convert max date to timestamp (end of that day)
+          const maxDateObj = new Date(maxHistoricalDate + 'T23:59:59Z');
+          maxHistoricalTimestamp = maxDateObj.getTime();
+        }
+        
+        // Track seen snapshot keys to avoid processing historical records
+        // that child_added fires for when first attached
+        this.seenSnapshotKeys = this.seenSnapshotKeys || new Set();
+        
+        // Flag to indicate when initial historical load is complete
+        // child_added fires for ALL existing children first, so we need to skip those
+        let isInitialLoadComplete = false;
+        setTimeout(() => {
+          isInitialLoadComplete = true;
+          console.log(`   ✓ Initial load complete - now listening for truly new data only`);
+        }, 3000); // Give historical fetch time to complete
+        
+        // Listen for new data using SDK
+        counterRef.on('child_added', (newSnapshot) => {
+          const snapshotKey = newSnapshot.key;
+          const data = newSnapshot.val();
+          
+          if (!data || !data.serial_number) return;
+          
+          const serial = data.serial_number.trim();
+          if (serial !== targetSerial) return;
+          
+          const timestamp = this.parseTimestampToUTC(data.iso8601 || data.timestamp_ms || data.timestamp);
+          if (!timestamp) return;
+          
+          const dateKey = this.formatDate(timestamp);
+          if (!dateKey) return;
+          
+          // Apply date filter
+          if (dateKey < filterStartDate) return;
+          
+          // Skip if we've already seen this snapshot key (from historical load)
+          if (this.seenSnapshotKeys.has(snapshotKey)) {
+            return; // Already processed
+          }
+          
+          // If initial load not complete, this is likely historical data
+          // Check if timestamp is older than max historical timestamp
+          if (!isInitialLoadComplete && maxHistoricalTimestamp > 0 && timestamp <= maxHistoricalTimestamp) {
+            this.seenSnapshotKeys.add(snapshotKey); // Mark as seen
+            return; // Historical data, skip
+          }
+          
+          // Mark as seen
+          this.seenSnapshotKeys.add(snapshotKey);
+          
+          const counter = data.counter;
+          if (counter == null) return;
+          
+          const dataSizeMB = this.calculateDataSize(data);
+          this.liveDataReceivedMB += dataSizeMB;
+          
+          if (isInitialLoadComplete) {
+            console.log(`  ✨ NEW live update: ${serial} | date: ${dateKey} | counter: ${counter} | timestamp: ${new Date(timestamp).toISOString()} (+${dataSizeMB.toFixed(4)} MB)`);
+          } else {
+            console.log(`  📥 Processing record: ${serial} | date: ${dateKey} | counter: ${counter}`);
+          }
+          
+          // Update device status
+          this.state.lastHeartbeat[serial] = Date.now();
+          const wasOffline = !this.state.devicesOnline.has(serial);
+          if (wasOffline) {
+            this.state.devicesOnline.add(serial);
+            this.renderDeviceList();
+            console.log(`✓ Device online: ${serial}`);
+          }
+          
+          // Handle live update - check if this is a new max counter for the day
+          if (!this.lastDailyCounters[serial][dateKey] || counter > this.lastDailyCounters[serial][dateKey]) {
+            const previousCounter = this.lastDailyCounters[serial][dateKey] || 0;
+            const newCycles = counter - previousCounter;
+            
+            if (newCycles > 0 && newCycles <= 500) {
+              // Add cycles for this day
+              this.addCyclesForDate(serial, dateKey, newCycles, timestamp);
+              this.lastDailyCounters[serial][dateKey] = counter;
+              console.log(`  ✓ Added ${newCycles} cycles for ${serial} on ${dateKey} (counter: ${previousCounter} → ${counter})`);
+            } else if (newCycles > 500) {
+              console.warn(`  ⚠️ Anomaly detected: ${newCycles} cycles in one update (skipped)`);
+            }
+          }
+        });
+        
+        // Also listen for child_changed (updates to existing records)
+        counterRef.on('child_changed', (snapshot) => {
+          const snapshotKey = snapshot.key;
+          const data = snapshot.val();
+          
+          if (!data || !data.serial_number) return;
+          
+          const serial = data.serial_number.trim();
+          if (serial !== targetSerial) return;
+          
+          const timestamp = this.parseTimestampToUTC(data.iso8601 || data.timestamp_ms || data.timestamp);
+          if (!timestamp) return;
+          
+          const dateKey = this.formatDate(timestamp);
+          if (!dateKey) return;
+          
+          // Apply date filter
+          if (dateKey < filterStartDate) return;
+          
+          const counter = data.counter;
+          if (counter == null) return;
+          
+          console.log(`  🔄 Record updated: ${serial} | date: ${dateKey} | counter: ${counter}`);
+          
+          // Check if this is a new max counter for the day
+          if (!this.lastDailyCounters[serial][dateKey] || counter > this.lastDailyCounters[serial][dateKey]) {
+            const previousCounter = this.lastDailyCounters[serial][dateKey] || 0;
+            const newCycles = counter - previousCounter;
+            
+            if (newCycles > 0 && newCycles <= 500) {
+              this.addCyclesForDate(serial, dateKey, newCycles, timestamp);
+              this.lastDailyCounters[serial][dateKey] = counter;
+              console.log(`  ✓ Added ${newCycles} cycles from update for ${serial} on ${dateKey}`);
+            }
+          }
+        });
+        
+        console.log(`✅ Live SDK listener active - monitoring for new data`);
+      }
+      
+      // Handle connection status with reconnection logic (called from startFirebaseListener)
+      setupConnectionStatus() {
+        const connectedRef = database.ref('.info/connected');
+        connectedRef.on('value', (snap) => {
+          const statusEl = document.getElementById('connectionStatus');
+          if (snap.val() === true) {
+            const totalMB = (this.totalDataDownloadedMB || 0) + (this.liveDataReceivedMB || 0);
+            console.log(`✓ Connected to Firebase | Total data: ${totalMB.toFixed(3)} MB`);
+            if (statusEl) {
+              statusEl.innerHTML = `<strong>✓ Live:</strong> Connected and monitoring<br><small style="font-size: 11px; opacity: 0.7;">Data: ${totalMB.toFixed(2)} MB</small>`;
+              statusEl.style.background = 'rgba(52, 199, 89, 0.1)';
+              statusEl.style.color = '#34c759';
+            }
+            // Clear any pending reconnection attempts
+            if (this.reconnectTimeout) {
+              clearTimeout(this.reconnectTimeout);
+              this.reconnectTimeout = null;
+            }
+          } else {
+            console.log('✗ Disconnected from Firebase');
+            if (statusEl) {
+              statusEl.innerHTML = '<strong>✗ Offline:</strong> Reconnecting...';
+              statusEl.style.background = 'rgba(255, 149, 0, 0.1)';
+              statusEl.style.color = '#ff9500';
+            }
+            // Attempt to force reconnection after 3 seconds
+            this.scheduleReconnect();
+          }
+        });
+      }
+      
+      scheduleReconnect() {
+        // Avoid multiple reconnection attempts
+        if (this.reconnectTimeout) return;
+        
+        console.log('⏱ Scheduling Firebase reconnection attempt...');
+        this.reconnectTimeout = setTimeout(() => {
+          console.log('🔄 Attempting to reconnect to Firebase...');
+          // Force Firebase to attempt reconnection
+          database.goOnline();
+          this.reconnectTimeout = null;
+        }, 3000);
+      }
+      
+      startVisibilityMonitor() {
+        // Detect when page becomes visible again (Android WebView often suspends when hidden)
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) {
+            console.log('👁 Page visible - checking Firebase connection...');
+            
+            // Gentle reconnection check with timeout protection
+            const checkTimeout = setTimeout(() => {
+              console.log('⏱ Connection check timeout - skipping');
+            }, 5000);
+            
+            // Check if we're actually connected
+            database.ref('.info/connected').once('value').then((snap) => {
+              clearTimeout(checkTimeout);
+              if (!snap.val()) {
+                console.log('🔌 Not connected - will reconnect naturally via Firebase');
+                // Let Firebase handle reconnection naturally, don't force it
+              } else {
+                console.log('✓ Already connected');
+              }
+            }).catch((err) => {
+              clearTimeout(checkTimeout);
+              console.error('❌ Connection check error:', err);
+            });
+          }
+        });
+        
+        console.log('✓ Page visibility monitor started');
+      }
+      
+      startConnectionHealthCheck() {
+        // Periodic check to ensure connection is healthy (every 5 minutes - gentle on WebView)
+        setInterval(() => {
+          // Only check if page is visible to avoid WebView issues
+          if (document.hidden) return;
+          
+          database.ref('.info/connected').once('value').then((snap) => {
+            const isConnected = snap.val();
+            if (!isConnected) {
+              console.log('⚠ Health check failed - will reconnect on next visibility');
+            } else {
+              console.log('✓ Health check passed - Firebase connected');
+            }
+          }).catch((err) => {
+            console.error('❌ Health check error:', err);
+          });
+        }, 300000); // Every 5 minutes (much less aggressive)
+        
+        console.log('✓ Connection health check started (5min interval)');
+      }
+      
+      startTimeoutChecker() {
+        const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+        const CHECK_INTERVAL_MS = 30 * 1000; // Check every 30 seconds
+        
+        setInterval(() => {
+          const now = Date.now();
+          let anyChanges = false;
+          
+          DEVICE.serialNumbers.forEach(serial => {
+            const lastSeen = this.state.lastHeartbeat[serial];
+            const isOnline = this.state.devicesOnline.has(serial);
+            
+            if (lastSeen && isOnline) {
+              const timeSinceLastSeen = now - lastSeen;
+              
+              // If device hasn't sent data in 10 minutes, mark as offline
+              if (timeSinceLastSeen > TIMEOUT_MS) {
+                this.state.devicesOnline.delete(serial);
+                anyChanges = true;
+                console.log(`⚠ Device offline (timeout): ${serial} - ${DEVICE.deviceNames[serial]} (last seen ${Math.floor(timeSinceLastSeen / 60000)} min ago)`);
+              }
+            }
+          });
+          
+          // Re-render device list if any device status changed
+          if (anyChanges) {
+            this.renderDeviceList();
+          }
+        }, CHECK_INTERVAL_MS);
+      }
+      
+      loadHistoricalDataFromDailyUsage(dailyUsage) {
+        console.log(`🔄 Processing ${dailyUsage.length} daily usage records...`);
+        const processStartTime = Date.now();
+        
+        // Process daily usage into cycles
+        const processedCycles = [];
+        const deviceCounters = {};
+        const lastDailyCounters = {};
+        
+        dailyUsage.forEach(record => {
+          const serial = record.serial;
+          const date = record.date;
+          const cycles = record.cycles;
+          
+          if (!deviceCounters[serial]) {
+            deviceCounters[serial] = 0;
+            lastDailyCounters[serial] = {};
+          }
+          
+          // Create cycles for this day
+          // Spread cycles throughout the day (assume evenly distributed)
+          const dayStart = new Date(date + 'T00:00:00Z').getTime();
+          const dayEnd = new Date(date + 'T23:59:59Z').getTime();
+          const cycleInterval = cycles > 0 ? (dayEnd - dayStart) / cycles : 0;
+          
+          for (let i = 0; i < cycles; i++) {
+            const cycleTimestamp = dayStart + (i * cycleInterval);
+            const cycle = {
+              timestamp: cycleTimestamp,
+              duration: DEVICE.cycleTime,
+              waterUsed: DEVICE.waterUsage,
+              energyUsed: DEVICE.energyUsage,
+              deviceSerial: serial,
+              deviceName: DEVICE.deviceNames[serial] || 'instarinse® Unit',
+              savings: this.state.calculateSavings(),
+              firebaseData: {
+                date: date,
+                cycles: cycles
+              }
+            };
+            processedCycles.push(cycle);
+          }
+          
+          deviceCounters[serial] += cycles;
+          lastDailyCounters[serial][date] = deviceCounters[serial];
+        });
+        
+        // Store last daily counters for live updates
+        this.lastDailyCounters = lastDailyCounters;
+        
+        const processTime = ((Date.now() - processStartTime) / 1000).toFixed(2);
+        const totalCycles = processedCycles.length;
+        console.log(`✓ Processed into ${totalCycles} total cycles in ${processTime}s`);
+        console.log(`📊 Final device counters:`, deviceCounters);
+        
+        // Store in state
+        this.state.cycles = processedCycles;
+        this.state.lastCounters = deviceCounters;
+        
+        // Recalculate totals
+        this.state.totals = {
+          water: 0,
+          energy: 0,
+          time: 0,
+          cost: 0,
+        };
+        processedCycles.forEach(cycle => {
+          this.state.totals.water += cycle.savings.water;
+          this.state.totals.energy += cycle.savings.energy;
+          this.state.totals.time += cycle.savings.time;
+          this.state.totals.cost += cycle.savings.cost;
+        });
+        
+        this.state.save();
+        this.render();
+        this.updateDailyGraph();
+        
+        // Calculate local storage size
+        try {
+          const stored = localStorage.getItem('instarinse_dashboard_v2');
+          const stateSizeMB = stored ? (new Blob([stored]).size / (1024 * 1024)) : 0;
+          console.log(`✅ Loaded ${totalCycles} historical cycles. Dashboard updated.`);
+          console.log(`💾 Local storage size: ${stateSizeMB.toFixed(3)} MB`);
+        } catch (e) {
+          console.log(`✅ Loaded ${totalCycles} historical cycles. Dashboard updated.`);
+        }
+      }
+      
+      addCyclesForDate(serial, date, cycles, timestamp) {
+        // Add cycles for a specific date (used by live updates)
+        const dayStart = new Date(date + 'T00:00:00Z').getTime();
+        const dayEnd = new Date(date + 'T23:59:59Z').getTime();
+        const cycleInterval = cycles > 0 ? (dayEnd - dayStart) / cycles : 0;
+        
+        // Find existing cycles for this date to determine starting timestamp
+        const existingCyclesForDate = this.state.cycles.filter(c => {
+          const cycleDate = this.formatDate(new Date(c.timestamp));
+          return cycleDate === date && c.deviceSerial === serial;
+        });
+        
+        const startOffset = existingCyclesForDate.length * cycleInterval;
+        
+        for (let i = 0; i < cycles; i++) {
+          const cycleTimestamp = dayStart + startOffset + (i * cycleInterval);
+          const cycle = {
+            timestamp: cycleTimestamp,
+            duration: DEVICE.cycleTime,
+            waterUsed: DEVICE.waterUsage,
+            energyUsed: DEVICE.energyUsage,
+            deviceSerial: serial,
+            deviceName: DEVICE.deviceNames[serial] || 'instarinse® Unit',
+            savings: this.state.calculateSavings(),
+            firebaseData: {
+              date: date,
+              cycles: cycles
+            }
+          };
+          this.state.addCycle(cycle);
+        }
+        
+        // Update last counter
+        if (!this.state.lastCounters[serial]) {
+          this.state.lastCounters[serial] = 0;
+        }
+        this.state.lastCounters[serial] += cycles;
+        this.state.save();
+        
+        // Mark device activity
+        this.state.deviceActivity[serial] = Date.now();
+        
+        // Update device list to show checkmark on active device
+        this.renderDeviceList();
+        
+        // Clear the checkmark after 5 seconds
+        setTimeout(() => {
+          this.state.deviceActivity[serial] = null;
+          this.renderDeviceList();
+        }, 5000);
+        
+        this.render();
+        this.updateDailyGraph();
+        this.animateDelta(this.state.calculateSavings());
+        
+        console.log(`✓ Added ${cycles} cycles for ${serial} on ${date}`);
+      }
+      
+      
+      updateDailyGraph() {
+        const canvas = document.getElementById('dailyUsageChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const container = canvas.parentElement;
+        const width = canvas.width = container ? container.offsetWidth : 800;
+        const height = canvas.height = 200;
+        
+        // Set display size (CSS size)
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        
+        // Group cycles by day
+        const dailyData = {};
+        this.state.cycles.forEach(cycle => {
+          const date = new Date(cycle.timestamp).toDateString();
+          if (!dailyData[date]) {
+            dailyData[date] = 0;
+          }
+          dailyData[date]++;
+        });
+        
+        // Get sorted dates
+        const dates = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
+        if (dates.length === 0) {
+          // Draw empty state
+          ctx.fillStyle = '#6e6e73';
+          ctx.font = '14px Inter';
+          ctx.textAlign = 'center';
+          ctx.fillText('No usage data yet', width / 2, height / 2);
+          return;
+        }
+        
+        const maxCycles = Math.max(...Object.values(dailyData));
+        const padding = 40;
+        const chartWidth = width - padding * 2;
+        const chartHeight = height - padding * 2;
+        const barWidth = Math.max(4, chartWidth / dates.length - 2);
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+        
+        // Draw bars
+        dates.forEach((date, index) => {
+          const cycles = dailyData[date];
+          const barHeight = (cycles / maxCycles) * chartHeight;
+          const x = padding + (index * (chartWidth / dates.length));
+          const y = height - padding - barHeight;
+          
+          // Gradient fill
+          const gradient = ctx.createLinearGradient(0, y, 0, height - padding);
+          gradient.addColorStop(0, '#007aff');
+          gradient.addColorStop(1, '#00d4ff');
+          
+          ctx.fillStyle = gradient;
+          ctx.fillRect(x, y, barWidth, barHeight);
+          
+          // Label every 7th day or last day
+          if (index % 7 === 0 || index === dates.length - 1) {
+            const dateObj = new Date(date);
+            const label = `${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
+            ctx.fillStyle = '#6e6e73';
+            ctx.font = '10px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, x + barWidth / 2, height - 10);
+          }
+        });
+        
+        // Y-axis label
+        ctx.fillStyle = '#6e6e73';
+        ctx.font = '11px Inter';
+        ctx.textAlign = 'right';
+        ctx.fillText(maxCycles.toString(), padding - 10, padding + 5);
+        ctx.fillText('0', padding - 10, height - padding + 5);
+      }
+      
+      
+      showProductIdle() {
+        this.renderDeviceList();
+      }
+      
+      renderDeviceList() {
+        const overlay = document.getElementById('productStatusOverlay');
+        
+        // Show clean stats only
+        overlay.innerHTML = `
+          <div class="device-stats">
+            <div class="device-stat-item">
+              <span class="device-stat-label">Install date:</span>
+              <span class="device-stat-value" style="font-weight: 700;">20th August 2025</span>
+            </div>
+            <div class="device-stat-item">
+              <span class="device-stat-label">Energy per cycle:</span>
+              <span class="device-stat-value" style="font-weight: 700;">0.009kWh</span>
+            </div>
+            <div class="device-stat-item">
+              <span class="device-stat-label">Water per cycle:</span>
+              <span class="device-stat-value" style="font-weight: 700;">50ml</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      hideProductStatus() {
+        // Return to device list view
+        this.renderDeviceList();
+      }
+      
+      animateDelta(savings) {
+        // Highlight cards
+        const cards = document.querySelectorAll('.metric-card');
+        cards.forEach(card => {
+          card.classList.add('highlight');
+          setTimeout(() => card.classList.remove('highlight'), 1000);
+        });
+        
+        // Show usage badges
+        const waterBadge = document.getElementById('waterUsageBadge');
+        const energyBadge = document.getElementById('energyUsageBadge');
+        
+        if (waterBadge) {
+          waterBadge.textContent = `+${DEVICE.waterUsage}mL`;
+          waterBadge.classList.add('show');
+          setTimeout(() => waterBadge.classList.remove('show'), 3000);
+        }
+        
+        if (energyBadge) {
+          energyBadge.textContent = `+${DEVICE.energyUsage.toFixed(3)}kWh`;
+          energyBadge.classList.add('show');
+          setTimeout(() => energyBadge.classList.remove('show'), 3000);
+        }
+      }
+      
+      render() {
+        // Count ALL cycles to date (since installation) + manual adjustment
+        const numCycles = this.state.cycles.length + DEVICE.manualAdjustment;
+        
+        console.log(`📊 Dashboard showing ${numCycles} total cycles to date (${this.state.cycles.length} from data + ${DEVICE.manualAdjustment} manual adjustment)`);
+        
+        // Calculate totals based on all cycles (including adjustment)
+        const totalWaterUsed = (numCycles * DEVICE.waterUsage) / 1000; // Convert to litres
+        const totalEnergyUsed = numCycles * DEVICE.energyUsage;
+        const energyCost = totalEnergyUsed * 0.28; // 28p per kWh
+        
+        // Update usage metrics - 1 decimal place
+        this.elements.metricWaterUsage.innerHTML = `${totalWaterUsed.toFixed(1)}<small style="font-size: 22px; font-weight: 600; margin-left: 4px;">L</small>`;
+        this.elements.metricEnergyUsage.innerHTML = `${totalEnergyUsed.toFixed(1)}<small style="font-size: 22px; font-weight: 600; margin-left: 4px;">kWh</small>`;
+        
+        // Update energy cost - 1 decimal place
+        const energyCostEl = document.getElementById('energyCost');
+        if (energyCostEl) {
+          energyCostEl.textContent = `Cost: £${energyCost.toFixed(1)}`;
+        }
+        
+        // Update cup metrics - Show total count to date
+        this.elements.metricCups.textContent = numCycles.toString();
+        this.elements.metricCupCost.textContent = `£${(numCycles * CUP_COST).toFixed(1)}`;
+        
+        // Update savings based on current comparison mode
+        this.updateSavingsDisplay();
+      }
+      
+      updateSavingsDisplay() {
+        // Count ALL cycles to date + manual adjustment
+        const numCycles = this.state.cycles.length + DEVICE.manualAdjustment;
+        
+        const baseline = BASELINES[this.comparisonMode];
+        const label = this.comparisonMode === 'handwash' ? 'Water Saved vs <span style="color: #ff9f0a;">Handwash</span>' : 'Water Saved vs <span style="color: #ff9f0a;">Dishwasher</span>';
+        const energyLabel = this.comparisonMode === 'handwash' ? 'Energy Saved vs <span style="color: #ff9f0a;">Handwash</span>' : 'Energy Saved vs <span style="color: #ff9f0a;">Dishwasher</span>';
+        
+        // Water savings (including adjustment) - 1 decimal place
+        const baselineWaterTotal = (numCycles * baseline.water) / 1000; // L
+        const actualWaterUsed = (numCycles * DEVICE.waterUsage) / 1000; // L
+        const waterSaved = baselineWaterTotal - actualWaterUsed;
+        const waterPercent = baselineWaterTotal > 0 ? ((waterSaved / baselineWaterTotal) * 100) : 0;
+        
+        this.elements.waterSavingsLabel.innerHTML = label;
+        this.elements.metricWaterSavings.innerHTML = `${waterSaved.toFixed(1)}<small style="font-size: 22px; font-weight: 600; margin-left: 4px;">L</small>`;
+        this.elements.waterSavingsPercent.textContent = `${Math.round(waterPercent)}% less water`;
+        
+        // Energy savings - 1 decimal place
+        const baselineEnergyTotal = numCycles * baseline.energy; // kWh
+        const actualEnergyUsed = numCycles * DEVICE.energyUsage; // kWh
+        const energySaved = baselineEnergyTotal - actualEnergyUsed;
+        const energyPercent = baselineEnergyTotal > 0 ? ((energySaved / baselineEnergyTotal) * 100) : 0;
+        
+        this.elements.energySavingsLabel.innerHTML = energyLabel;
+        this.elements.metricEnergySavings.innerHTML = `${energySaved.toFixed(1)}<small style="font-size: 22px; font-weight: 600; margin-left: 4px;">kWh</small>`;
+        this.elements.energySavingsPercent.textContent = `${Math.round(energyPercent)}% less energy`;
+      }
+      
+      startAlternating() {
+        this.alternateInterval = setInterval(() => {
+          // Start blur transition
+          const savingsCards = document.querySelectorAll('.metric-card.alternating');
+          savingsCards.forEach(card => card.classList.add('transitioning'));
+          
+          // After blur, switch mode
+          setTimeout(() => {
+            this.comparisonMode = this.comparisonMode === 'handwash' ? 'dishwash' : 'handwash';
+            this.updateSavingsDisplay();
+            
+            // Remove blur
+            savingsCards.forEach(card => card.classList.remove('transitioning'));
+          }, 1000);
+        }, 10000);
+      }
+      
+      startClock() {
+        const updateClock = () => {
+          const now = new Date();
+          const hours = now.getHours().toString().padStart(2, '0');
+          const minutes = now.getMinutes().toString().padStart(2, '0');
+          this.elements.navTime.textContent = `${hours}:${minutes}`;
+          
+          const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const dayName = days[now.getDay()];
+          const day = now.getDate();
+          const month = months[now.getMonth()];
+          this.elements.navDate.textContent = `${dayName}, ${day} ${month}`;
+          
+          // Update greeting based on time of day
+          const hour = now.getHours();
+          const greetingEl = document.getElementById('greeting');
+          if (greetingEl) {
+            let greeting = 'Good morning,<br>UKRI';
+            if (hour >= 12 && hour < 18) {
+              greeting = 'Good afternoon,<br>UKRI';
+            } else if (hour >= 18) {
+              greeting = 'Good evening,<br>UKRI';
+            }
+            greetingEl.innerHTML = greeting;
+          }
+        };
+        
+        updateClock();
+        setInterval(updateClock, 1000);
+      }
+      
+      
+    }
+    
+    const state = new DashboardState();
+    const ui = new DashboardUI(state);
+    
+    // Initialize graph on load and handle resize
+    setTimeout(() => {
+      if (ui && ui.updateDailyGraph) {
+        ui.updateDailyGraph();
+      }
+    }, 1000);
+    
+    // Update graph on window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (ui && ui.updateDailyGraph) {
+          ui.updateDailyGraph();
+        }
+      }, 250);
+    });
+  </script>
+</body>
+</html>
+
+
