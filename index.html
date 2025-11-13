@@ -2472,7 +2472,6 @@
         
         this.state.save();
         this.render();
-        this.updateDailyGraph();
         
         // Calculate local storage size
         try {
@@ -2527,6 +2526,13 @@
         // Mark device activity
         this.state.deviceActivity[serial] = Date.now();
         
+        // Re-render dashboard to update all metrics
+        console.log(`🔄 About to render. Cycles count: ${this.state.cycles.length}`);
+        this.render();
+        console.log(`✅ Render complete`);
+        this.animateDelta(this.state.calculateSavings());
+        console.log(`✅ Animation complete`);
+        
         // Update device list to show checkmark on active device
         this.renderDeviceList();
         
@@ -2535,10 +2541,6 @@
           this.state.deviceActivity[serial] = null;
           this.renderDeviceList();
         }, 5000);
-        
-        this.render();
-        this.updateDailyGraph();
-        this.animateDelta(this.state.calculateSavings());
         
         console.log(`✓ Added ${cycles} cycles for ${serial} on ${date}`);
       }
