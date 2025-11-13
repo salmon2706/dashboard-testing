@@ -2060,7 +2060,8 @@
                   serialUsage.push({
                     serial,
                     date: entry.date,
-                    cycles
+                    cycles,
+                    finalCounter: entry.finalCounter  // Store actual counter value
                   });
                 }
               });
@@ -2410,6 +2411,7 @@
           const serial = record.serial;
           const date = record.date;
           const cycles = record.cycles;
+          const finalCounter = record.finalCounter;  // Actual counter value from Firebase
           
           if (!deviceCounters[serial]) {
             deviceCounters[serial] = 0;
@@ -2441,11 +2443,13 @@
           }
           
           deviceCounters[serial] += cycles;
-          lastDailyCounters[serial][date] = deviceCounters[serial];
+          // Store the ACTUAL Firebase counter value, not cumulative cycles
+          lastDailyCounters[serial][date] = finalCounter;
         });
         
         // Store last daily counters for live updates
         this.lastDailyCounters = lastDailyCounters;
+        console.log(`📊 Stored last daily counters for live updates:`, lastDailyCounters);
         
         const processTime = ((Date.now() - processStartTime) / 1000).toFixed(2);
         const totalCycles = processedCycles.length;
