@@ -2527,24 +2527,12 @@
         this.state.lastCounters[serial] += cycles;
         this.state.save();
         
-        // Mark device activity
-        this.state.deviceActivity[serial] = Date.now();
-        
         // Re-render dashboard to update all metrics
         console.log(`🔄 About to render. Cycles count: ${this.state.cycles.length}`);
         this.render();
         console.log(`✅ Render complete`);
         this.animateDelta(this.state.calculateSavings());
         console.log(`✅ Animation complete`);
-        
-        // Update device list to show checkmark on active device
-        this.renderDeviceList();
-        
-        // Clear the checkmark after 5 seconds
-        setTimeout(() => {
-          this.state.deviceActivity[serial] = null;
-          this.renderDeviceList();
-        }, 5000);
         
         console.log(`✓ Added ${cycles} cycles for ${serial} on ${date}`);
       }
@@ -2667,20 +2655,27 @@
           setTimeout(() => card.classList.remove('highlight'), 1000);
         });
         
-        // Show usage badges
+        // Show usage badges (they should fade in, stay 3 sec, then fade out)
         const waterBadge = document.getElementById('waterUsageBadge');
         const energyBadge = document.getElementById('energyUsageBadge');
         
         if (waterBadge) {
           waterBadge.textContent = `+${DEVICE.waterUsage}mL`;
-          waterBadge.classList.add('show');
-          setTimeout(() => waterBadge.classList.remove('show'), 3000);
+          waterBadge.classList.remove('show'); // Force reset
+          // Use requestAnimationFrame to ensure class removal is processed before adding
+          requestAnimationFrame(() => {
+            waterBadge.classList.add('show');
+            setTimeout(() => waterBadge.classList.remove('show'), 3000);
+          });
         }
         
         if (energyBadge) {
           energyBadge.textContent = `+${DEVICE.energyUsage.toFixed(3)}kWh`;
-          energyBadge.classList.add('show');
-          setTimeout(() => energyBadge.classList.remove('show'), 3000);
+          energyBadge.classList.remove('show'); // Force reset
+          requestAnimationFrame(() => {
+            energyBadge.classList.add('show');
+            setTimeout(() => energyBadge.classList.remove('show'), 3000);
+          });
         }
       }
       
